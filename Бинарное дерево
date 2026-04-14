@@ -1,0 +1,204 @@
+class BinaryTreeNode {
+    int value;
+    BinaryTreeNode left;
+    BinaryTreeNode right;
+    public BinaryTreeNode(int value) {
+        this.value = value;
+        this.left = null;
+        this.right = null;
+    }
+}
+public class BinaryTree {
+    private BinaryTreeNode head;
+    private int size;
+    //Конструктор
+    public BinaryTree() {
+        this.head = null;
+        this.size = 0;
+    }
+    private static class NodePair {
+        BinaryTreeNode parent;
+        BinaryTreeNode current;
+        NodePair(BinaryTreeNode parent, BinaryTreeNode current) {
+            this.parent = parent;
+            this.current = current;
+        }
+    }
+    //Поиск узла и его родителя по значению
+    private NodePair findWithParent(int value) {
+        BinaryTreeNode parent = null;
+        BinaryTreeNode current = head;
+        while (current != null) {
+            if (value == current.value) {
+                return new NodePair(parent, current);
+            }
+            parent = current;
+            if (value < current.value) {
+                current = current.left;
+            } else {
+                current = current.right;
+            }
+        }
+        return new NodePair(null, null); //не найдено
+    }
+    //Метод проверки существования значения
+    public boolean contains(int value) {
+    NodePair pair = findWithParent(value);
+    return pair.current != null;
+}
+    // Итеративное удаление
+    public boolean remove(int value) {
+        NodePair pair = findWithParent(value);
+        BinaryTreeNode current = pair.current;
+        BinaryTreeNode parent = pair.parent;
+        if (current == null) {
+            return false; //значение не найдено
+        }
+        size--;
+        //Случай 1: нет правого ребёнка
+        if (current.right == null) {
+            if (parent == null) {
+                head = current.left;
+            } else {
+                if (value < parent.value) {
+                    parent.left = current.left;
+                } else {
+                    parent.right = current.left;
+                }
+            }
+        }
+        //Случай 2: у правого ребёнка нет левого потомка
+        else if (current.right.left == null) {
+            current.right.left = current.left;
+            if (parent == null) {
+                head = current.right;
+            } else {
+                if (value < parent.value) {
+                    parent.left = current.right;
+                } else {
+                    parent.right = current.right;
+                }
+            }
+        }
+        //Случай 3: у правого ребёнка есть левые потомки
+        else {
+            //Находим крайний левый узел в правом поддереве
+            BinaryTreeNode leftmost = current.right.left;
+            BinaryTreeNode leftmostParent = current.right;
+            while (leftmost.left != null) {
+                leftmostParent = leftmost;
+                leftmost = leftmost.left;
+            }
+            //Левое поддерево родителя становится правым поддеревом крайнего левого
+            leftmostParent.left = leftmost.right;
+            //Крайний левый узел заменяет удаляемый
+            leftmost.left = current.left;
+            leftmost.right = current.right;
+
+            if (parent == null) {
+                head = leftmost;
+            } else {
+                if (value < parent.value) {
+                    parent.left = leftmost;
+                } else {
+                    parent.right = leftmost;
+                }
+            }
+        }
+        return true;
+    }
+    //Вставка узла (итеративный способ, как в примере)
+    public void Add(int value) {
+        if (head == null) {
+            head = new BinaryTreeNode(value);
+            size++;
+            return;
+        }
+        BinaryTreeNode current = head;
+        while (true) {
+            if (value < current.value) {
+                if (current.left == null) {
+                    current.left = new BinaryTreeNode(value);
+                    size++;
+                    break;
+                } else {
+                    current = current.left;
+                }
+            } else {
+                if (current.right == null) {
+                    current.right = new BinaryTreeNode(value);
+                    size++;
+                    break;
+                } else {
+                    current = current.right;
+                }
+            }
+        }
+    }
+    //Создание дерева из массива значений (статический метод)
+    public static BinaryTree createFromList(int[] values) {
+        BinaryTree tree = new BinaryTree();
+        for (int v : values) {
+            tree.Add(v);
+        }
+        return tree;
+    }
+    //Печать
+    public void printTree() {
+        printRecursive(head);
+        System.out.println();
+    }
+    private void printRecursive(BinaryTreeNode node) {
+        if (node == null) return;
+        System.out.print(node.value + " ");
+        printRecursive(node.left);
+        printRecursive(node.right);
+    }
+    //Метод для проверки размера
+    public int count() {
+        return size;
+    }
+    //Метод для очистки дерева
+    public void clear() {
+    head = null;
+    size = 0;
+}
+    //Для демонстрации – метод main
+    public static void main(String[] args) {
+    int[] values = {10, 5, 15, 2, 7, 12, 17};
+    BinaryTree tree = BinaryTree.createFromList(values);
+    System.out.println("--------------------------------");
+    System.out.print("До изменений: ");
+    tree.printTree(); 
+    System.out.println("Размер: " + tree.count());
+    System.out.println("Содержит 7? : " + tree.contains(7));
+    System.out.println("Содержит 10? : " + tree.contains(10));
+    System.out.println("Содержит 12? : " + tree.contains(12));
+    System.out.println("--------------------------------");
+    //Удаляем значение 7
+    tree.remove(7);
+    System.out.print("После удаления 7: ");
+    tree.printTree();  
+    System.out.println("Размер: " + tree.count());
+    System.out.println("Содержит 7? : " + tree.contains(7));
+    System.out.println("--------------------------------");
+    // Удаляем узел с двумя детьми (10)
+    tree.remove(10);
+    System.out.print("После удаления 10: ");
+    tree.printTree();
+    System.out.println("Размер: " + tree.count());
+    System.out.println("Содержит 10? : " + tree.contains(10));
+    System.out.println("--------------------------------");
+    // Удаляем корень (после удаления 10 корнем стал 12)
+    tree.remove(12);
+    System.out.print("После удаления 12: ");
+    tree.printTree();
+    System.out.println("Содержит 12? : " + tree.contains(12));
+    System.out.println("Размер: " + tree.count());
+    System.out.println("--------------------------------");
+    tree.clear();
+    System.out.println("После очистки, размер: " + tree.count()); // 0
+    System.out.print("Содержимое: ");
+    tree.printTree(); // (пустая строка)
+}
+}
